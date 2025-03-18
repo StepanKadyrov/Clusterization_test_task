@@ -4,7 +4,7 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     this->setWindowTitle("Тестовое задание");
     this->setMinimumSize(1300, 650);
-    this->setStyleSheet("*{font-family: Comic Sans MS; font-size: 14pt; font-weight: Normal;}");
+    this->setStyleSheet("*{font-family: Сondensed; font-size: 14pt; font-weight: Normal;}");
 
     // Создаём главный виджет и делаем его центральным для окна
 
@@ -132,6 +132,9 @@ void MainWindow::plotData(int numberGraphic)
     colorScale->setType(QCPAxis::atRight);
     colorMap->setGradient(QCPColorGradient::gpJet);
     colorMap->rescaleDataRange();
+
+    plot->xAxis->setLabel("Долгота");
+    plot->yAxis->setLabel("Широта");
 
     plot->rescaleAxes();
     plot->replot();
