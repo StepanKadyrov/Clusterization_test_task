@@ -6,18 +6,14 @@
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QVBoxLayout>
-
-#include <QDebug>
-
-// Ещё не использовал
-#include <QPushButton>
 #include <QLabel>
 #include <QSpinBox>
 #include <QFile>
 #include <QTextStream>
+#include <QPushButton>
 
-#include <algorithm>
-
+#include <QDebug>
+#include "kmeans.h"
 #include "qcustomplot.h"
 
 struct DataPoint {
@@ -37,13 +33,20 @@ private:
     QCustomPlot *plot;
     QVector<DataPoint> data;
     QComboBox *featureComboBox;
-
+    QCPColorMap *colorMap;
     void fillComboBox();
-
+    int nx, ny; // размеры карты
+    QSpinBox *nxSB;
+    QSpinBox *nySB;
+    double boundary[4]; // x_min, x_max, y_min, y_max
+    QSpinBox *numClustSB;
+    QSpinBox *maxIterClustSB;
+    void plotClusters(QVector<int> labels);
+    QComboBox *featureClustComboBox;
 private slots:
     void downloadData();
     void runClustering();
-    void plotData(int numberGraphic);
+    void plotData();
 
 };
 #endif // MAINWINDOW_H
