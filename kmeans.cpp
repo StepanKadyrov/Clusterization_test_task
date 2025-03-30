@@ -28,7 +28,6 @@ void kmeans::fit(QVector<QVector<double>> data)
                 changed = true;
             }
         }
-
         if (!changed) break; // Если нет изменений — выход
 
         updateCentroids();
