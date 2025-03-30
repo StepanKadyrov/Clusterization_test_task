@@ -37,16 +37,43 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     nxSB->setMinimum(1);
     nxSB->setMaximum(INT_MAX);
     nxSB->setValue(nx);
+    connect(nxSB, SIGNAL(valueChanged(int)), this, SLOT(plotData()));
 
     nySB = new QSpinBox();
     nySB->setMinimum(1);
     nySB->setMaximum(INT_MAX);
     nySB->setValue(ny);
+    connect(nySB, SIGNAL(valueChanged(int)), this, SLOT(plotData()));
 
-    QComboBox *gradientSP = new QComboBox();
+    // Комбо-бокс для выбора цвета градиента
+    gradientComboBox = new QComboBox();
+    QLabel *gradientLabel = new QLabel("Градиент");
+    struct GradientItem {
+            QString name;
+            QCPColorGradient::GradientPreset preset;
+    };
 
-    QPushButton *replotButton = new QPushButton("Перестроить график");
-    connect(replotButton, SIGNAL(clicked()), this, SLOT(plotData()));
+    const GradientItem gradients[] = {
+        {"Grayscale", QCPColorGradient::gpGrayscale},
+        {"Hot", QCPColorGradient::gpHot},
+        {"Cold", QCPColorGradient::gpCold},
+        {"Night", QCPColorGradient::gpNight},
+        {"Candy", QCPColorGradient::gpCandy},
+        {"Geography", QCPColorGradient::gpGeography},
+        {"Ion", QCPColorGradient::gpIon},
+        {"Thermal", QCPColorGradient::gpThermal},
+        {"Polar", QCPColorGradient::gpPolar},
+        {"Spectrum", QCPColorGradient::gpSpectrum},
+        {"Jet", QCPColorGradient::gpJet},
+        {"Hues", QCPColorGradient::gpHues}
+    };
+
+    // Добавляем все градиенты в комбобокс
+    for (const auto& gradient : gradients) {
+        gradientComboBox->addItem(gradient.name, QVariant::fromValue(gradient.preset));
+    }
+
+    connect(gradientComboBox, SIGNAL(currentIndexChanged(int)),this, SLOT(gradientChanged(int)));
 
     //Параметры кластеризации
     QLabel *clustLabel = new QLabel("Параметры кластеризации");
@@ -63,9 +90,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     //Признаки кластеризации
     featureClustComboBox = new QComboBox();
 
-
     QPushButton *clustButton = new QPushButton("Запустить кластеризацию");
     connect(clustButton, SIGNAL(clicked()), this, SLOT(runClustering()));
+
+    QPushButton *delClustButton = new QPushButton("Очистить кластеризацию");
+    connect(delClustButton, SIGNAL(clicked()), this, SLOT(delClust()));
 
     QGridLayout *graphicParamLayout = new QGridLayout();
     graphicParamLayout->addWidget(clustLabel, 0, 2, 1, 2); // Почему не расстягивается
@@ -76,14 +105,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     graphicParamLayout->addWidget(numClustLabel, 1, 2);
     graphicParamLayout->addWidget(numClustSB, 1, 3);
 
-
     graphicParamLayout->addWidget(nyLabel, 2, 0);
     graphicParamLayout->addWidget(nySB, 2, 1);
     graphicParamLayout->addWidget(numIterLabel, 2, 2);
     graphicParamLayout->addWidget(maxIterClustSB, 2, 3);
 
-    graphicParamLayout->addWidget(replotButton, 4, 0, 1, 2);
+    graphicParamLayout->addWidget(gradientLabel, 4, 0, 1, 1);
+    graphicParamLayout->addWidget(gradientComboBox, 4, 1, 1, 1);
     graphicParamLayout->addWidget(clustButton, 4, 2, 1, 2);
+
+    graphicParamLayout->addWidget(delClustButton, 5, 2, 1, 2);
 
 
     //Создаём график
@@ -99,7 +130,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     plot->xAxis->setLabel("Долгота");
     plot->yAxis->setLabel("Широта");
 
-
+    colorMap = new QCPColorMap(plot->xAxis, plot->yAxis);
+    colorMap->setVisible(false);
     QVBoxLayout *topLayout = new QVBoxLayout();
     topLayout->setAlignment(Qt::AlignCenter);
     topLayout->addWidget(featureComboBox);
@@ -107,22 +139,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     topLayout->addWidget(plot);
     mainWid->setLayout(topLayout);
 
-//    runClusteringButton = new QPushButton("Запустить кластеризацию", this);
-//    plot = new QCustomPlot(this);
-//    plot->setMinimumSize(600, 400);
-
-//    layout->addWidget(plot, 1);
-//    setCentralWidget(centralWidget);
-//    resize(800, 600);
-
-//    connect(runClusteringButton, &QPushButton::clicked, this, &MainWindow::runClustering);
-//    loadData("clustering.dat");
-//    plotData();
 }
 
 void MainWindow::runClustering()
 {
-    qDebug() << "Кластеризация запущена!";
     //Инициализация центроидов
     int numClust = numClustSB->value();
     int maxIter = maxIterClustSB->value();;
@@ -196,17 +216,9 @@ void MainWindow::downloadData()
 
 void MainWindow::plotData()
 {
+    colorMap->setVisible(true);
     int numGraphic = featureComboBox->currentIndex();
     if (numGraphic == -1) return; // Обрабатываем очистку featureComboBox при загрузке новых данных
-    plot->clearPlottables();
-
-    //По поводу затирания данных тут подумать. Не надо ли принудительно удалять
-//    if(colorMap != nullptr){
-//        qDebug() << "плохо";
-//        delete colorMap;
-//    }
-
-    colorMap = new QCPColorMap(plot->xAxis, plot->yAxis);//Надо ли каждый раз пересоздавать, можно ли просто очистить и на ней же построить
 
     nx = nxSB->value();
     ny = nySB->value();
@@ -239,7 +251,8 @@ void MainWindow::plotData()
     colorScale->axis()->setLabel(QString("Признак %1").arg(numGraphic + 1));
     colorMap->rescaleDataRange(true);
     colorMap->setInterpolate(true);
-    QCPColorGradient gradient = QCPColorGradient::gpJet; // Базовый градиент
+    QCPColorGradient::GradientPreset preset = gradientComboBox->currentData().value<QCPColorGradient::GradientPreset>();
+    QCPColorGradient gradient(preset); // Создаём объект градиента
     gradient.setNanHandling(QCPColorGradient::nhTransparent);
     colorMap->setGradient(gradient);
     plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
@@ -259,8 +272,6 @@ void MainWindow::plotData()
 
 }
 
-//При удалении QComboBox выдаёт сигнал об изменении текущей позиции
-
 void MainWindow::fillComboBox()
 {
     //Обновляем ComboBox, в котором выбираются графики
@@ -273,11 +284,11 @@ void MainWindow::fillComboBox()
 
 void MainWindow::plotClusters(QVector<int> labels)
 {
-    // Цвета для кластеров
+    // Цвета для кластеров. Можно ли ещё добавить
     QVector<QColor> clusterColors = {Qt::red, Qt::blue, Qt::green, Qt::magenta, Qt::cyan, Qt::yellow};
-
-    // Очистка предыдущих кластеров
-    plot->clearPlottables();
+    for (int i = plot->graphCount() - 1; i >= 0; i--) {
+        plot->removeGraph(i);
+    }
 
     //Создание графиков для каждого кластера
     QMap<int, QCPGraph*> clusterGraphs;
@@ -292,6 +303,25 @@ void MainWindow::plotClusters(QVector<int> labels)
         }
         clusterGraphs[cluster]->addData(data[i].longitude, data[i].latitude);
     }
-
     plot->replot();
+}
+
+void MainWindow::delClust()
+{
+    for (int i = plot->graphCount() - 1; i >= 0; i--) {
+        plot->removeGraph(i);
+    }
+    plot->replot();
+}
+
+void MainWindow::gradientChanged(int index)
+{
+    //Если график не пустой, то меняем градиент
+    if(colorMap->data()){
+        QCPColorGradient::GradientPreset preset = gradientComboBox->itemData(index).value<QCPColorGradient::GradientPreset>();
+        QCPColorGradient gradient(preset); // Создаём объект градиента
+        gradient.setNanHandling(QCPColorGradient::nhTransparent);
+        colorMap->setGradient(gradient);   // Применяем градиент к цветовой карте
+        plot->replot();
+    }
 }

@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QPushButton>
+#include <QMetaEnum>
 
 #include <QDebug>
 #include "kmeans.h"
@@ -31,10 +32,9 @@ public:
     ~MainWindow();
 private:
     QCustomPlot *plot;
+    QCPColorMap *colorMap;
     QVector<DataPoint> data;
     QComboBox *featureComboBox;
-    QCPColorMap *colorMap;
-    void fillComboBox();
     int nx, ny; // размеры карты
     QSpinBox *nxSB;
     QSpinBox *nySB;
@@ -42,11 +42,14 @@ private:
     QSpinBox *numClustSB;
     QSpinBox *maxIterClustSB;
     void plotClusters(QVector<int> labels);
+    void fillComboBox();
+    QComboBox *gradientComboBox;
     QComboBox *featureClustComboBox;
 private slots:
     void downloadData();
     void runClustering();
     void plotData();
-
+    void delClust();
+    void gradientChanged(int index);
 };
 #endif // MAINWINDOW_H
