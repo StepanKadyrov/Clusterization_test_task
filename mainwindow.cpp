@@ -345,7 +345,12 @@ void MainWindow::plotClusters()
 {
     QVector<int> labels = kmeansPtr->getLabels();
     // Цвета для кластеров. Можно ли ещё добавить
-    QVector<QColor> clusterColors = {Qt::red, Qt::blue, Qt::green, Qt::magenta, Qt::cyan, Qt::yellow};
+    QVector<QColor> clusterColors;
+    clusterColors.reserve(numClustSB->value());
+    for (int i = 0; i < numClustSB->value(); ++i) {
+        int hue = (360 * i) / numClustSB->value();
+        clusterColors.append(QColor::fromHsv(hue, 200, 255));
+    }
     for (int i = plot->graphCount() - 1; i >= 0; i--) {
         plot->removeGraph(i);
     }
