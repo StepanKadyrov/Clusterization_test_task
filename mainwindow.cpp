@@ -344,7 +344,6 @@ void MainWindow::runClustering()
 void MainWindow::plotClusters()
 {
     QVector<int> labels = kmeansPtr->getLabels();
-    // Цвета для кластеров. Можно ли ещё добавить
     QVector<QColor> clusterColors;
     clusterColors.reserve(numClustSB->value());
     for (int i = 0; i < numClustSB->value(); ++i) {
@@ -395,7 +394,6 @@ void MainWindow::saveResult()
                                            options, 0, false, &ok);
     if (!ok) return; // Пользователь отменил выбор
 
-    // Открываем файл для записи
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::critical(this, "Ошибка сохранения", "Не удалось открыть файл для записи!");
