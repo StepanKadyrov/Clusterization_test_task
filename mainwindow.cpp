@@ -96,7 +96,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     QLabel *featureClustLabel = new QLabel("Признаки для кластеризации");
     featureClustList = new QListWidget();
     featureClustList->setSelectionMode(QAbstractItemView::MultiSelection);
-//    featureClustList->setFixedHeight(80);
 
     QPushButton *clustButton = new QPushButton("Запустить кластеризацию");
     connect(clustButton, SIGNAL(clicked()), this, SLOT(runClustering()));
@@ -104,42 +103,42 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     QPushButton *delClustButton = new QPushButton("Очистить кластеризацию");
     connect(delClustButton, SIGNAL(clicked()), this, SLOT(delClust()));
 
-    QGridLayout *graphicParamLayout = new QGridLayout();
+    QGridLayout *gridLayout = new QGridLayout();
 
     //Заполняем всё, что связано с графиком
-    graphicParamLayout->addWidget(graphicParamLabel, 0, 0, 1, 2);
-    graphicParamLayout->addWidget(featureComboBox, 1, 0, 1, 2);
+    gridLayout->addWidget(graphicParamLabel, 0, 0, 1, 2);
+    gridLayout->addWidget(featureComboBox, 1, 0, 1, 2);
 
-    graphicParamLayout->addWidget(nxLabel, 2, 0);
-    graphicParamLayout->addWidget(nxSB, 2, 1);
+    gridLayout->addWidget(nxLabel, 2, 0);
+    gridLayout->addWidget(nxSB, 2, 1);
 
-    graphicParamLayout->addWidget(nyLabel, 3, 0);
-    graphicParamLayout->addWidget(nySB, 3, 1);
+    gridLayout->addWidget(nyLabel, 3, 0);
+    gridLayout->addWidget(nySB, 3, 1);
 
-    graphicParamLayout->addWidget(gradientLabel, 4, 0, 1, 1);
-    graphicParamLayout->addWidget(gradientComboBox, 4, 1, 1, 1);
-    graphicParamLayout->addWidget(interpolCB, 5, 0, 1, 2);
+    gridLayout->addWidget(gradientLabel, 4, 0, 1, 1);
+    gridLayout->addWidget(gradientComboBox, 4, 1, 1, 1);
+    gridLayout->addWidget(interpolCB, 5, 0, 1, 2);
 
     //Добавляем вертикальный разделитель
     QFrame *verticalSeparator = new QFrame();
     verticalSeparator->setFrameShape(QFrame::VLine);
     verticalSeparator->setFrameShadow(QFrame::Sunken);
-    graphicParamLayout->addWidget(verticalSeparator, 0, 2, 5, 1);
+    gridLayout->addWidget(verticalSeparator, 0, 2, 5, 1);
 
     //Заполняем всё, что связано с кластеризацией
-    graphicParamLayout->addWidget(clustLabel, 0, 3, 1, 2);
+    gridLayout->addWidget(clustLabel, 0, 3, 1, 2);
 
-    graphicParamLayout->addWidget(numClustLabel, 1, 3);
-    graphicParamLayout->addWidget(numClustSB, 1, 4);
+    gridLayout->addWidget(numClustLabel, 1, 3);
+    gridLayout->addWidget(numClustSB, 1, 4);
 
-    graphicParamLayout->addWidget(numIterLabel, 2, 3);
-    graphicParamLayout->addWidget(maxIterClustSB, 2, 4);
+    gridLayout->addWidget(numIterLabel, 2, 3);
+    gridLayout->addWidget(maxIterClustSB, 2, 4);
 
-    graphicParamLayout->addWidget(featureClustLabel, 3, 3, 2, 1);
-    graphicParamLayout->addWidget(featureClustList, 3, 4, 2, 1);
+    gridLayout->addWidget(featureClustLabel, 3, 3, 2, 1);
+    gridLayout->addWidget(featureClustList, 3, 4, 2, 1);
 
-    graphicParamLayout->addWidget(clustButton, 5, 3, 1, 1);
-    graphicParamLayout->addWidget(delClustButton, 5, 4, 1, 1);
+    gridLayout->addWidget(clustButton, 5, 3, 1, 1);
+    gridLayout->addWidget(delClustButton, 5, 4, 1, 1);
 
     //Создаём график
     plot = new QCustomPlot(this);
@@ -158,7 +157,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     colorMap->setVisible(false);
     QVBoxLayout *topLayout = new QVBoxLayout();
     topLayout->setAlignment(Qt::AlignCenter);
-    topLayout->addLayout(graphicParamLayout);
+    topLayout->addLayout(gridLayout);
     topLayout->addWidget(plot);
     mainWid->setLayout(topLayout);
 }
@@ -245,29 +244,21 @@ void MainWindow::plotData()
 
     QCPColorScale *colorScale = new QCPColorScale(plot);
     plot->plotLayout()->addElement(0, 1, colorScale);
-    colorMap->setColorScale(colorScale);
     colorScale->setType(QCPAxis::atRight);
     colorScale->axis()->setLabel(QString("Признак %1").arg(numGraphic + 1));
+    colorMap->setColorScale(colorScale);
+
     colorMap->rescaleDataRange(true);
     colorMap->setInterpolate(interpolCB->isChecked());
+
     QCPColorGradient::GradientPreset preset = gradientComboBox->currentData().value<QCPColorGradient::GradientPreset>();
     QCPColorGradient gradient(preset); // Создаём объект градиента
     gradient.setNanHandling(QCPColorGradient::nhTransparent);
     colorMap->setGradient(gradient);
-    plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
+    plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     plot->xAxis->setScaleRatio(plot->yAxis);
     plot->rescaleAxes();
-
-    // Выравниваем масштаб осей. Тут пока непонятно, подумать
-    double xRange = boundary[1] - boundary[0];
-    double yRange = boundary[3] - boundary[2];
-    double maxRange = std::max(xRange, yRange);
-    double xMid = (boundary[0] + boundary[1]) / 2.0;
-    double yMid = (boundary[2] + boundary[3]) / 2.0;
-
-    plot->xAxis->setRange(xMid - maxRange / 2.0, xMid + maxRange / 2.0);
-    plot->yAxis->setRange(yMid - maxRange / 2.0, yMid + maxRange / 2.0);
     plot->replot();
 
 }
@@ -284,7 +275,6 @@ void MainWindow::fillComboBox()
 
 void MainWindow::setupFeatureClustList()
 {
-
     QListWidgetItem *itemX = new QListWidgetItem(QString("X"));
     itemX->setFlags(itemX->flags() | Qt::ItemIsUserCheckable);
     itemX->setCheckState(Qt::Checked);
@@ -332,7 +322,6 @@ void MainWindow::runClustering()
     // Формируем данные для кластеризации на основе выбранных признаков
     for (int i = 0; i < data.size(); ++i) {
         QVector<double> point;
-        // Проверяем, выбраны ли координаты X (longitude) и Y (latitude)
         if (selectedFeatures[0]) { // X (longitude)
             point.append(data[i].longitude);
         }
@@ -340,7 +329,6 @@ void MainWindow::runClustering()
             point.append(data[i].latitude);
         }
 
-        // Проверяем выбранные признаки из values
         for (int j = 0; j < data[i].values.size(); j++) {
             if (selectedFeatures[j + 2]) { // Смещение на 2 из-за X и Y
                 point.append(data[i].values[j]);
@@ -362,7 +350,7 @@ void MainWindow::plotClusters()
         plot->removeGraph(i);
     }
 
-    //Создание графиков для каждого кластера
+    // Создание графиков для каждого кластера
     QMap<int, QCPGraph*> clusterGraphs;
     for (int i = 0; i< data.size(); i++) {
         int cluster = labels[i];
@@ -385,8 +373,12 @@ void MainWindow::saveResult()
         QMessageBox::warning(this, "Ошибка", "Нет данных для сохранения!");
         return;
     }
+    // Проверяем, проводилась ли вообще кластеризация
+    if(!kmeansPtr){
+        QMessageBox::warning(this, "Ошибка", "Нет данных кластеризации для сохранения!");
+        return;
+    }
 
-    // Запрашиваем путь для сохранения файла
     QString filename = QFileDialog::getSaveFileName(this, "Сохранить результат", "", "*.dat *.txt");
     if (filename.isEmpty()) {
         return;
@@ -406,8 +398,6 @@ void MainWindow::saveResult()
     }
 
     // Подготовка данных для записи
-
-
     QVector<int> labels = kmeansPtr->getLabels();
     QVector<DataEntry> entries;
     for (int i = 0; i < data.size(); ++i) {
@@ -440,7 +430,7 @@ void MainWindow::saveResult()
             return;
         }
 
-    // Формируем строку для вывода результата
+    // Формируем строку с информацией о кластеризации
     QString resultStr;
     if (selectedFeatures[0]) {
         resultStr.append("X, ");

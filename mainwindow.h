@@ -13,7 +13,6 @@
 #include <QPushButton>
 #include <QMetaEnum>
 
-#include <QDebug>
 #include "kmeans.h"
 #include "qcustomplot.h"
 
@@ -42,19 +41,22 @@ private:
     QCPColorMap *colorMap;
     QVector<DataPoint> data;
     kmeans *kmeansPtr;
-    QListWidget *featureClustList;
-    int nx, ny; // размеры карты
-    QSpinBox *nxSB;
-    QSpinBox *nySB;
     double boundary[4]; // x_min, x_max, y_min, y_max
-    QSpinBox *numClustSB;
-    QSpinBox *maxIterClustSB;
-    void plotClusters();
-    void fillComboBox();
+    int nx, ny; // размеры карты
+
     QComboBox *gradientComboBox;
     QComboBox *featureComboBox;
-    void setupFeatureClustList();
+    QSpinBox *nxSB;
+    QSpinBox *nySB;
     QCheckBox *interpolCB;
+
+    QListWidget *featureClustList;
+    QSpinBox *numClustSB;
+    QSpinBox *maxIterClustSB;
+
+    void plotClusters();
+    void fillComboBox();
+    void setupFeatureClustList();
 private slots:
     void downloadData();
     void runClustering();
